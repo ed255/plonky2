@@ -117,6 +117,7 @@ impl<F: RichField + Extendable<D>, C: GenericConfig<D, F = F>, const D: usize>
         blinding: bool,
         fft_root_table: Option<&FftRootTable<F>>,
     ) -> Vec<Vec<F>> {
+        println!("DBG lde_values");
         let degree = polynomials[0].len();
 
         // If blinding, salt with two random elements to each leaf vector.
@@ -134,6 +135,7 @@ impl<F: RichField + Extendable<D>, C: GenericConfig<D, F = F>, const D: usize>
                 (0..salt_size)
                     .into_par_iter()
                     .map(|_| F::rand_vec(degree << rate_bits)),
+                // .map(|_| (0..(degree << rate_bits)).map(|_| F::ZERO).collect()),
             )
             .collect()
     }

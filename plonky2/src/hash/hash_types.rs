@@ -72,6 +72,7 @@ where
     where
         R: rand::RngCore + ?Sized,
     {
+        println!("DBG HashOut::sample");
         Self {
             elements: [
                 F::sample(rng),

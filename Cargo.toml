@@ -19,6 +19,7 @@ opt-level = 3
 incremental = true
 #lto = "fat"
 #codegen-units = 1
+debug = 1
 
 [profile.bench]
 opt-level = 3

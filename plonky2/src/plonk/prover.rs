@@ -126,6 +126,7 @@ where
         &format!("run {} generators", prover_data.generators.len()),
         generate_partial_witness(inputs, prover_data, common_data)?
     );
+    // println!("partition_witness\n{:#?}", partition_witness); // Eq
 
     prove_with_partition_witness(prover_data, common_data, partition_witness, timing)
 }
@@ -327,6 +328,17 @@ where
     challenger.observe_openings(&openings.to_fri_openings());
     let instance = common_data.get_fri_instance(zeta);
 
+    // print!("instance\n{:#?}", &instance); // Eq
+    // print!("ch\n{:#?}", &challenger); // Eq
+    // println!(
+    //     "array\n{:#?}",
+    //     &[
+    //         &prover_data.constants_sigmas_commitment,
+    //         &wires_commitment,
+    //         &partial_products_zs_and_lookup_commitment,
+    //         &quotient_polys_commitment,
+    //     ],
+    // ); Eq
     let opening_proof = timed!(
         timing,
         "compute opening proofs",
@@ -346,6 +358,20 @@ where
         )
     );
 
+    // println!(
+    //     "wires_commitment.merkle_tree.cap\n{:#?}",
+    //     wires_commitment.merkle_tree.cap
+    // ); // Eq
+    // println!(
+    //     "partial_products_zs_and_lookup_commitment.merkle_tree.cap\n{:#?}",
+    //     partial_products_zs_and_lookup_commitment.merkle_tree.cap
+    // ); // Eq
+    // println!(
+    //     "quotient_polys_commitment.merkle_tree.cap\n{:#?}",
+    //     quotient_polys_commitment.merkle_tree.cap,
+    // ); // Eq
+    // println!("openings\n{:#?}", openings,); // Eq
+    // println!("opening_proof\n{:#?}", opening_proof); // Diff
     let proof = Proof::<F, C, D> {
         wires_cap: wires_commitment.merkle_tree.cap,
         plonk_zs_partial_products_cap: partial_products_zs_and_lookup_commitment.merkle_tree.cap,

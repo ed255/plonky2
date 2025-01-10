@@ -919,6 +919,7 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilder<F, D> {
     }
 
     fn blind(&mut self) {
+        println!("DBG blind");
         let (regular_poly_openings, z_openings) = self.blinding_counts();
         info!(
             "Adding {} blinding terms for witness polynomials, and {}*2 for Z polynomials",
@@ -1050,11 +1051,12 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilder<F, D> {
     /// division by zero, the next attempt will have an (almost) independent chance of success.
     /// See <https://github.com/0xPolygonZero/plonky2/issues/456>.
     fn randomize_unused_pi_wires(&mut self, pi_gate: usize) {
-        for wire in PublicInputGate::wires_public_inputs_hash().end..self.config.num_wires {
-            self.add_simple_generator(RandomValueGenerator {
-                target: Target::wire(pi_gate, wire),
-            });
-        }
+        println!("DBG randomize_unused_pi_wires");
+        // for wire in PublicInputGate::wires_public_inputs_hash().end..self.config.num_wires {
+        //     self.add_simple_generator(RandomValueGenerator {
+        //         target: Target::wire(pi_gate, wire),
+        //     });
+        // }
     }
 
     /// Builds a "full circuit", with both prover and verifier data.
