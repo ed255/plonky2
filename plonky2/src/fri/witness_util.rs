@@ -53,7 +53,7 @@ where
     for i in coeffs_len..target_len {
         witness.set_extension_target(fri_proof_target.final_poly.0[i], F::Extension::ZERO)?;
     }
-    println!("witness\n{:#?}", witness);
+    // println!("witness\n{:#?}", witness); // Eq
 
     let target_caps = &fri_proof_target.commit_phase_merkle_caps;
     let proof_caps = &fri_proof.commit_phase_merkle_caps;

@@ -1,3 +1,7 @@
 plonky2::iop::witness::PartialWitness<plonky2_field::goldilocks_field::GoldilocksField>
   set_extension_target->set_target_arr->set_target
 this method makes a diff
+
+This was an issue with iteration over HashMap but the contents were equal.  I made the output equal using a linked-list based HashMap
+
+The `BaseSplitGenerator + Base: 2` generates different data

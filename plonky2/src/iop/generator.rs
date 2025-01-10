@@ -37,15 +37,19 @@ pub fn generate_partial_witness<
     let generators = &prover_data.generators;
     let generator_indices_by_watches = &prover_data.generator_indices_by_watches;
 
+    // println!("inputs\n{:#?}", inputs); // Eq
     let mut witness = PartitionWitness::new(
         config.num_wires,
         common_data.degree(),
         &prover_data.representative_map,
     );
+    // println!("witness\n{:#?}", witness); // Eq
 
     for (t, v) in inputs.target_values.into_iter() {
         witness.set_target(t, v)?;
     }
+
+    // println!("witness\n{:#?}", witness); // Eq
 
     // Build a list of "pending" generators which are queued to be run. Initially, all generators
     // are queued.
@@ -57,6 +61,7 @@ pub fn generate_partial_witness<
 
     let mut buffer = GeneratedValues::empty();
 
+    // println!("generators\n{:#?}", generators);
     // Keep running generators until we fail to make progress.
     while !pending_generator_indices.is_empty() {
         let mut next_pending_generator_indices = Vec::new();
@@ -67,6 +72,10 @@ pub fn generate_partial_witness<
             }
 
             let finished = generators[generator_idx].0.run(&witness, &mut buffer);
+            println!(
+                "xxx gen {} {:?}\n{:#?}",
+                generator_idx, generators[generator_idx], buffer
+            );
             if finished {
                 generator_is_expired[generator_idx] = true;
                 remaining_generators -= 1;

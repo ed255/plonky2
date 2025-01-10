@@ -616,7 +616,7 @@ mod test {
 
         // println!("prover_only\n{:#?}", data.prover_only); // Eq
         // println!("common\n{:#?}", data.common); // Eq
-        // println!("pw\n{:#?}", pw); // Diff
+        // println!("pw\n{:#?}", pw); // Eq
         let proof = prove::<F, C, D>(&data.prover_only, &data.common, pw, &mut timing)?;
         // println!("proof\n{:#?}", proof); // Diff
         data.verify(proof.clone())?;
