@@ -279,6 +279,10 @@ mod test {
     type F = <C as GenericConfig<D>>::F;
     type H = <C as GenericConfig<D>>::Hasher;
 
+    fn zero_vec(n: usize) -> Vec<F> {
+        (0..n).map(|_| F::ZERO).collect()
+    }
+
     #[test]
     fn batch_prove_openings() -> anyhow::Result<()> {
         let mut timing = TimingTree::default();
@@ -303,10 +307,10 @@ mod test {
         let n0 = 1 << k0;
         let n1 = 1 << k1;
         let n2 = 1 << k2;
-        let trace0 = PolynomialValues::new(F::rand_vec(n0));
-        let trace1_0 = PolynomialValues::new(F::rand_vec(n1));
-        let trace1_1 = PolynomialValues::new(F::rand_vec(n1));
-        let trace2 = PolynomialValues::new(F::rand_vec(n2));
+        let trace0 = PolynomialValues::new(zero_vec(n0));
+        let trace1_0 = PolynomialValues::new(zero_vec(n1));
+        let trace1_1 = PolynomialValues::new(zero_vec(n1));
+        let trace2 = PolynomialValues::new(zero_vec(n2));
 
         let trace_oracle: BatchFriOracle<GoldilocksField, C, D> = BatchFriOracle::from_values(
             vec![
@@ -321,6 +325,8 @@ mod test {
             &mut timing,
             &[None; 4],
         );
+
+        // println!("trace_oracle\n{:#?}", trace_oracle); // Eq
 
         let mut challenger = Challenger::<F, H>::new();
         challenger.observe_cap(&trace_oracle.batch_merkle_tree.cap);
@@ -443,6 +449,7 @@ mod test {
             &fri_params,
             &mut timing,
         );
+        // println!("proof\n{:#?}", proof); // Eq
 
         let fri_challenges = verifier_challenger.fri_challenges::<C, D>(
             &proof.commit_phase_merkle_caps,
@@ -601,10 +608,17 @@ mod test {
         );
 
         let mut pw = PartialWitness::new();
+        // println!("fir_proof_target\n{:#?}", fri_proof_target); // Eq
+        // println!("proof\n{:#?}", proof); // Eq
         set_fri_proof_target(&mut pw, &fri_proof_target, &proof)?;
 
         let data = builder.build::<C>();
+
+        // println!("prover_only\n{:#?}", data.prover_only); // Eq
+        // println!("common\n{:#?}", data.common); // Eq
+        // println!("pw\n{:#?}", pw); // Diff
         let proof = prove::<F, C, D>(&data.prover_only, &data.common, pw, &mut timing)?;
+        // println!("proof\n{:#?}", proof); // Diff
         data.verify(proof.clone())?;
 
         Ok(())

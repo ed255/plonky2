@@ -16,10 +16,12 @@ pub fn set_fri_proof_target<F, W, H, const D: usize>(
 ) -> Result<()>
 where
     F: RichField + Extendable<D>,
-    W: WitnessWrite<F> + ?Sized,
+    W: WitnessWrite<F> + ?Sized + std::fmt::Debug,
     H: AlgebraicHasher<F>,
 {
+    // println!("W: {}", std::any::type_name::<W>());
     witness.set_target(fri_proof_target.pow_witness, fri_proof.pow_witness)?;
+    // println!("witness\n{:#?}", witness); // Eq
 
     let target_len = fri_proof_target.final_poly.0.len();
     let coeffs_len = fri_proof.final_poly.coeffs.len();
@@ -30,6 +32,14 @@ where
         ));
     }
 
+    // println!(
+    //     "fri_proof_target.final_poly.0\n{:#?}",
+    //     fri_proof_target.final_poly.0
+    // ); // Eq
+    // println!(
+    //     "fri_proof.final_poly.coeffs\n{:#?}",
+    //     fri_proof.final_poly.coeffs
+    // ); // Eq
     // Set overlapping elements
     for i in 0..coeffs_len {
         witness.set_extension_target(
@@ -37,11 +47,13 @@ where
             fri_proof.final_poly.coeffs[i],
         )?;
     }
+    // println!("witness\n{:#?}", witness); // Eq
 
     // Set remaining elements in target to ZERO if target is longer
     for i in coeffs_len..target_len {
         witness.set_extension_target(fri_proof_target.final_poly.0[i], F::Extension::ZERO)?;
     }
+    println!("witness\n{:#?}", witness);
 
     let target_caps = &fri_proof_target.commit_phase_merkle_caps;
     let proof_caps = &fri_proof.commit_phase_merkle_caps;
@@ -63,6 +75,8 @@ where
             witness.set_hash_target(*hash, HashOut::ZERO)?;
         }
     }
+
+    // println!("witness\n{:#?}", witness); // Diff
 
     for (qt, q) in fri_proof_target
         .query_round_proofs

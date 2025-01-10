@@ -2,10 +2,13 @@
 use alloc::{vec, vec::Vec};
 use core::iter::zip;
 
+// use std::{collections::HashMap, hash::BuildHasherDefault};
 use anyhow::{anyhow, Result};
-use hashbrown::HashMap;
 use itertools::{zip_eq, Itertools};
+// use hashbrown::HashMap;
+use linked_hash_map::LinkedHashMap as HashMap;
 
+// use twox_hash::XxHash32;
 use crate::field::extension::{Extendable, FieldExtension};
 use crate::field::types::Field;
 use crate::fri::structure::{FriOpenings, FriOpeningsTarget};
@@ -19,7 +22,7 @@ use crate::plonk::circuit_data::{VerifierCircuitTarget, VerifierOnlyCircuitData}
 use crate::plonk::config::{AlgebraicHasher, GenericConfig};
 use crate::plonk::proof::{Proof, ProofTarget, ProofWithPublicInputs, ProofWithPublicInputsTarget};
 
-pub trait WitnessWrite<F: Field> {
+pub trait WitnessWrite<F: Field>: std::fmt::Debug {
     fn set_target(&mut self, target: Target, value: F) -> Result<()>;
 
     fn set_hash_target(&mut self, ht: HashOutTarget, value: HashOut<F>) -> Result<()> {
@@ -58,6 +61,7 @@ pub trait WitnessWrite<F: Field> {
 
     fn set_target_arr(&mut self, targets: &[Target], values: &[F]) -> Result<()> {
         for (&target, &value) in zip_eq(targets, values) {
+            // println!("> {:?} {:?}", target, value);
             self.set_target(target, value)?;
         }
 
@@ -299,6 +303,7 @@ impl<F: Field> PartialWitness<F> {
     pub fn new() -> Self {
         Self {
             target_values: HashMap::new(),
+            // target_values: HashMap::<_, _, BuildHasherDefault<XxHash32>>::default(),
         }
     }
 }

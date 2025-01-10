@@ -1051,7 +1051,7 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilder<F, D> {
     /// division by zero, the next attempt will have an (almost) independent chance of success.
     /// See <https://github.com/0xPolygonZero/plonky2/issues/456>.
     fn randomize_unused_pi_wires(&mut self, pi_gate: usize) {
-        println!("DBG randomize_unused_pi_wires");
+        // println!("DBG randomize_unused_pi_wires");
         // for wire in PublicInputGate::wires_public_inputs_hash().end..self.config.num_wires {
         //     self.add_simple_generator(RandomValueGenerator {
         //         target: Target::wire(pi_gate, wire),
