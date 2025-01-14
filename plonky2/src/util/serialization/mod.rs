@@ -131,6 +131,7 @@ pub trait Read {
         Ok(u32::from_le_bytes(buf))
     }
 
+    // TODO: Remove, this is not 32-bit friendly
     /// Reads a `usize` value from `self`.
     #[inline]
     fn read_usize(&mut self) -> IoResult<usize> {
@@ -139,6 +140,7 @@ pub trait Read {
         Ok(u64::from_le_bytes(buf) as usize)
     }
 
+    // TODO: Remove, this is not 32-bit friendly
     /// Reads a vector of `usize` value from `self`.
     #[inline]
     fn read_usize_vec(&mut self) -> IoResult<Vec<usize>> {
