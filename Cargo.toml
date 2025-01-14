@@ -1,5 +1,5 @@
 [workspace]
-members = ["field", "maybe_rayon", "plonky2", "starky", "util"]
+members = ["field", "maybe_rayon", "plonky2", "starky", "util", "wasm"]
 resolver = "2"
 
 [workspace.dependencies]
@@ -19,6 +19,7 @@ opt-level = 3
 incremental = true
 #lto = "fat"
 #codegen-units = 1
+debug = true
 
 [profile.bench]
 opt-level = 3
