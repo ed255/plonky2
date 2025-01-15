@@ -1,9 +1,9 @@
 use plonky2::field::goldilocks_field::GoldilocksField as F;
-use plonky2::field::types::Field;
-use plonky2::hash::poseidon::{Poseidon, SPONGE_WIDTH};
+use plonky2::field::types::{Field, PrimeField64};
+// use plonky2::hash::poseidon::{Poseidon, SPONGE_WIDTH};
 // extern crate wasm_bindgen_test;
 // use wasm_bindgen_test::*;
-use web_sys::{console, window, Performance};
+// use web_sys::{console, window, Performance};
 
 extern "C" {
     // We use these functions to make sure the input is not a constant and that the output is used
@@ -47,11 +47,36 @@ extern "C" {
 // }
 
 #[no_mangle]
-pub extern "C" fn test_goldilocks_add() {
+pub extern "C" fn test_goldilocks_add_external_inputs() {
     let a = F::from_canonical_u64(unsafe { get_input() });
     let b = F::from_canonical_u64(unsafe { get_input() });
     let c = a + b;
     unsafe {
         set_output(c.0);
     }
+}
+
+#[no_mangle]
+pub extern "C" fn test_goldilocks_mul_external_inputs() {
+    let a = F::from_canonical_u64(unsafe { get_input() });
+    let b = F::from_canonical_u64(unsafe { get_input() });
+    let c = a * b;
+    unsafe {
+        set_output(c.0);
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn test_goldilocks_add(a: u64, b: u64) -> u64 {
+    let a = F::from_canonical_u64(a);
+    let b = F::from_canonical_u64(b);
+    let c = a + b;
+    c.to_canonical_u64()
+}
+#[no_mangle]
+pub extern "C" fn test_goldilocks_mul(a: u64, b: u64) -> u64 {
+    let a = F::from_canonical_u64(a);
+    let b = F::from_canonical_u64(b);
+    let c = a * b;
+    c.to_canonical_u64()
 }
