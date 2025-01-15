@@ -25,14 +25,6 @@
     local.get 0
     local.get 1
     i64.lt_u
-    select
-    local.tee 0
-    i64.const 4294967295
-    i64.add
-    local.get 0
-    local.get 0
-    i64.const -4294967296
-    i64.gt_u
     select)
   (export "main" (func $main))
 )
