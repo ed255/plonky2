@@ -110,8 +110,8 @@ fn add(self, rhs: Self) -> Self {
 ;; rsi is b
 ```
 ```
-0x00000050   1                       55  push rbp
-0x00000051   3                   4889e5  mov rbp, rsp
+0x00000050   1                       55  push rbp ;; Stack stuff, ignore
+0x00000051   3                   4889e5  mov rbp, rsp ;; Stack stuff, ignore
 0x00000054   3                   4803f7  add rsi, rdi
 0x00000057   5               b9ffffffff  mov ecx, 0xffffffff
 0x0000005c   2                     33c0  xor eax, eax
@@ -123,9 +123,15 @@ fn add(self, rhs: Self) -> Self {
 0x00000071   3                   4903c3  add rax, r11
 0x00000074   3                   483bce  cmp rcx, rsi
 0x00000077   4                 480f43c1  cmovae rax, rcx
-0x0000007b   1                       5d  pop rbp
+0x0000007b   1                       5d  pop rbp ;; Stack stuff, ignore
 0x0000007c   1                       c3  ret
 ```
+
+11 instructions (without ret)
+Non-optimized instructions (4):
+- 2nd mov of 0xffffffff
+- 2 * cmp
+- mov rax, rcx
 
 ### Native x86_64 generated code
 ```
@@ -143,6 +149,8 @@ fn add(self, rhs: Self) -> Self {
 12ea6:       c3                      ret
 ```
 
+7 instructions (without ret)
+
 Without the `branch_hint`:
 ```
 12e90:       31 c9                   xor    ecx,ecx
@@ -154,6 +162,8 @@ Without the `branch_hint`:
 12ea5:       48 0f 43 c1             cmovae rax,rcx
 12ea9:       c3                      ret
 ```
+
+7 instructions (without ret)
 
 ## x86_64 notes
 
