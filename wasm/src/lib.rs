@@ -71,12 +71,12 @@ pub extern "C" fn test_goldilocks_add(a: u64, b: u64) -> u64 {
     let a = F::from_canonical_u64(a);
     let b = F::from_canonical_u64(b);
     let c = a + b;
-    c.to_canonical_u64()
+    c.0
 }
 #[no_mangle]
 pub extern "C" fn test_goldilocks_mul(a: u64, b: u64) -> u64 {
     let a = F::from_canonical_u64(a);
     let b = F::from_canonical_u64(b);
     let c = a * b;
-    c.to_canonical_u64()
+    c.0
 }

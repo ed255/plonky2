@@ -60,15 +60,7 @@
     i64.lt_u
     select
     local.get 0
-    i64.add
-    local.tee 0
-    i64.const 4294967295
-    i64.add
-    local.get 0
-    local.get 0
-    i64.const -4294967296
-    i64.gt_u
-    select)
+    i64.add)
   (func $__multi3 (type 1) (param i32 i64 i64 i64 i64)
     (local i64 i64 i64 i64 i64 i64)
     local.get 0
