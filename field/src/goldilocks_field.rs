@@ -313,6 +313,14 @@ impl SubAssign for GoldilocksField {
 impl Mul for GoldilocksField {
     type Output = Self;
 
+    #[cfg(not(target_arch = "wasm32"))]
+    #[inline]
+    fn mul(self, rhs: Self) -> Self {
+        reduce128((self.0 as u128) * (rhs.0 as u128))
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    #[target_feature(enable = "simd128")]
     #[inline]
     fn mul(self, rhs: Self) -> Self {
         reduce128((self.0 as u128) * (rhs.0 as u128))
