@@ -329,20 +329,52 @@ impl Mul for GoldilocksField {
 
 /// mul_wasm32 implements the trick explained by Jordi Baylina
 pub fn mul_wasm32(a: GoldilocksField, b: GoldilocksField) -> GoldilocksField {
-    // note alternative to `as u32 as u64` could be to do `& 0xffffffff` and then treat the
-    // result as u64
-    let (a0, a1): (u64, u64) = (a.0 as u32 as u64, (a.0 >> 32) as u32 as u64);
-    let (b0, b1): (u64, u64) = (b.0 as u32 as u64, (b.0 >> 32) as u32 as u64);
+    fn split_u64(v: u64) -> (u64, u64) {
+        (v & 0xffffffff, v >> 32)
+    }
 
-    let a1_b1: u64 = a1 * b1; // compute it here so that it can be reused
-    let w: u64 = a1 * b0 + a0 * b1 + a1_b1; // todo: overflows
-    let (m0, m1): (u64, u64) = (w as u64, (w >> 32) as u64);
+    let (a0, a1) = split_u64(a.0);
+    let (b0, b1) = split_u64(b.0);
 
-    let c0: u64 = a0 * b0 - a1_b1 - m1; // todo: underflows
+    let a0_b0 = a0 * b0;
+    let a0_b1 = a0 * b1;
+    let a1_b0 = a1 * b0;
+    let a1_b1 = a1 * b1;
+
+    // let w = a0_b1 + a1_b0 + a1_b1;
+    let (w, over) = a0_b1.overflowing_add(a1_b0);
+    let (mut w, over) = w.overflowing_add((over as u64) * EPSILON);
+    if over {
+        w += EPSILON;
+    }
+    let (w, over) = w.overflowing_add(a1_b1);
+    let (mut w, over) = w.overflowing_add((over as u64) * EPSILON);
+    if over {
+        w += EPSILON;
+    }
+    let (m0, m1) = split_u64(w);
+
+    // let c0 = a0_b0 - a1_b1 - m1;
+    let (c0, borrow) = a0_b0.overflowing_sub(a1_b1);
+    let (mut c0, borrow) = c0.overflowing_sub((borrow as u64) * EPSILON);
+    if borrow {
+        c0 -= EPSILON;
+    }
+    let (c0, borrow) = c0.overflowing_sub(m1);
+    let (mut c0, borrow) = c0.overflowing_sub((borrow as u64) * EPSILON);
+    if borrow {
+        c0 -= EPSILON;
+    }
 
     let c1 = m0 + m1;
 
-    let c: u64 = (c1 << 32) | c0;
+    // let c: u64 = (c1 << 32) | c0;
+    let (c, over) = c1.overflowing_shl(32);
+    let (mut c, over) = c.overflowing_add((over as u64) * EPSILON);
+    if over {
+        c += EPSILON;
+    }
+    let c = c | c0;
     GoldilocksField(c)
 }
 

@@ -92,6 +92,89 @@ pub extern "C" fn test_goldilocks_many_add(a: u64, b: u64) -> u64 {
     a.0
 }
 
+const EPSILON: u64 = (1 << 32) - 1;
+
+pub fn mul_wasm32_arnau(a: F, b: F) -> F {
+    // note alternative to `as u32 as u64` could be to do `& 0xffffffff` and then treat the
+    // result as u64
+    let (a0, a1): (u64, u64) = (a.0 as u32 as u64, (a.0 >> 32) as u32 as u64);
+    let (b0, b1): (u64, u64) = (b.0 as u32 as u64, (b.0 >> 32) as u32 as u64);
+
+    let a1_b1: u64 = a1 * b1; // compute it here so that it can be reused
+    let w: u64 = a1 * b0 + a0 * b1 + a1_b1; // todo: overflows
+    let (m0, m1): (u64, u64) = (w as u64, (w >> 32) as u64);
+
+    let c0: u64 = a0 * b0 - a1_b1 - m1; // todo: underflows
+
+    let c1 = m0 + m1;
+
+    let c: u64 = (c1 << 32) | c0;
+    F(c)
+}
+
+/// mul_wasm32 implements the trick explained by Jordi Baylina
+pub fn mul_wasm32(a: F, b: F) -> F {
+    fn split_u64(v: u64) -> (u64, u64) {
+        (v & 0xffffffff, v >> 32)
+    }
+
+    let (a0, a1) = split_u64(a.0);
+    let (b0, b1) = split_u64(b.0);
+
+    let a0_b0 = a0 * b0;
+    let a0_b1 = a0 * b1;
+    let a1_b0 = a1 * b0;
+    let a1_b1 = a1 * b1;
+
+    // let w = a0*b1 + a1*b0 + a1*b1;
+    let (w, over) = a0_b1.overflowing_add(a1_b0);
+    dbg!(over);
+    let (mut w, over) = w.overflowing_add((over as u64) * EPSILON);
+    dbg!(over);
+    if over {
+        w += EPSILON;
+    }
+    let (w, over) = w.overflowing_add(a1_b1);
+    dbg!(over);
+    let (mut w, over) = w.overflowing_add((over as u64) * EPSILON);
+    dbg!(over);
+    if over {
+        w += EPSILON;
+    }
+    let (m0, m1) = split_u64(w);
+
+    // let c0 = a0*b0 - a1*b1 - m1;
+    let (c0, borrow) = a0_b0.overflowing_sub(a1_b1);
+    dbg!(borrow);
+    let (mut c0, borrow) = c0.overflowing_sub((borrow as u64) * EPSILON);
+    dbg!(borrow);
+    if borrow {
+        c0 -= EPSILON;
+    }
+    let (c0, borrow) = c0.overflowing_sub(m1);
+    dbg!(borrow);
+    let (mut c0, borrow) = c0.overflowing_sub((borrow as u64) * EPSILON);
+    dbg!(borrow);
+    if borrow {
+        c0 -= EPSILON;
+    }
+
+    let c1 = m0 + m1;
+
+    // let c: u64 = (c1 << 32) | c0;
+    // let (c, over) = c1.overflowing_shl(32);
+    let c = c1 << 32;
+    let c = c | c0;
+    let over = c1 > EPSILON;
+    dbg!(over);
+    let (mut c, over) = c.overflowing_add((over as u64) * EPSILON);
+    dbg!(over);
+    if over {
+        c += EPSILON;
+    }
+    F(c)
+}
+
 // to run these tests:
 // cargo test --release -- --nocapture
 #[cfg(test)]
@@ -108,19 +191,19 @@ mod tests {
         let b: u64 = 42;
         let a = F::from_canonical_u64(a);
         let b = F::from_canonical_u64(b);
-        let c = plonky2::field::goldilocks_field::mul_wasm32(a, b);
-        // note that the result is already 'canonicalized'
-        assert_eq!(c.0, c.to_canonical_u64());
-        assert_eq!(c.0, (a * b).to_canonical_u64()); // compare to the non-wasm32 mult
-        assert_eq!(c.0, 18446744069414584300 as u64);
+        let c = mul_wasm32(a, b);
+        assert_eq!(c.to_canonical_u64(), (a * b).to_canonical_u64()); // compare to the non-wasm32 mult
+        assert_eq!(c.to_canonical_u64(), 18446744069414584300 as u64);
+
+        println!("");
 
         let a: u64 = 9223372034707292160;
         let b: u64 = 9223372034707292161;
         let a = F::from_canonical_u64(a);
         let b = F::from_canonical_u64(b);
-        let c = plonky2::field::goldilocks_field::mul_wasm32(a, b);
-        assert_eq!(c.0, (a * b).to_canonical_u64()); // compare to the non-wasm32 mult
-        assert_eq!(c.0, 4611686017353646080 as u64);
+        let c = mul_wasm32(a, b);
+        assert_eq!(c.to_canonical_u64(), (a * b).to_canonical_u64()); // compare to the non-wasm32 mult
+        assert_eq!(c.to_canonical_u64(), 4611686017353646080 as u64);
     }
 
     // uncomment once the previous test passes:
