@@ -80,3 +80,49 @@ pub extern "C" fn test_goldilocks_mul(a: u64, b: u64) -> u64 {
     let c = a * b;
     c.0
 }
+
+// to run these tests:
+// cargo test --release -- --nocapture
+#[cfg(test)]
+mod tests {
+    use plonky2::field::types::Sample;
+    use rand::rngs::OsRng;
+    use rand::{Rng, RngCore};
+
+    use super::*;
+
+    #[test]
+    fn test_mul_wasm32() {
+        let a: u64 = 9223372034707292160;
+        let b: u64 = 42;
+        let a = F::from_canonical_u64(a);
+        let b = F::from_canonical_u64(b);
+        let c = plonky2::field::goldilocks_field::mul_wasm32(a, b);
+        // note that the result is already 'canonicalized'
+        assert_eq!(c.0, c.to_canonical_u64());
+        assert_eq!(c.0, (a * b).to_canonical_u64()); // compare to the non-wasm32 mult
+        assert_eq!(c.0, 18446744069414584300 as u64);
+
+        let a: u64 = 9223372034707292160;
+        let b: u64 = 9223372034707292161;
+        let a = F::from_canonical_u64(a);
+        let b = F::from_canonical_u64(b);
+        let c = plonky2::field::goldilocks_field::mul_wasm32(a, b);
+        assert_eq!(c.0, (a * b).to_canonical_u64()); // compare to the non-wasm32 mult
+        assert_eq!(c.0, 4611686017353646080 as u64);
+    }
+
+    // uncomment once the previous test passes:
+    // #[test]
+    // fn test_mul_wasm32_loop() {
+    //     for _ in 0..10000 {
+    //         let a = F::rand();
+    //         let b = F::rand();
+    //         dbg!(a);
+    //         dbg!(b);
+    //         let c = plonky2::field::goldilocks_field::mul_wasm32(a, b);
+    //         // note that the result is already 'canonicalized'
+    //         assert_eq!(c.0, (a * b).to_canonical_u64()); // compare to the non-wasm32 mult
+    //     }
+    // }
+}
