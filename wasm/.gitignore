@@ -1,3 +1,5 @@
 wasm/
 *.wasm
-wasm_test.wat
+# ignore ./*.wat files, but not the ones in the ./wasm/wat directory
+*.wat
+!wat/*.wat
