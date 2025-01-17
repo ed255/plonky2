@@ -80,3 +80,14 @@ pub extern "C" fn test_goldilocks_mul(a: u64, b: u64) -> u64 {
     let c = a * b;
     c.0
 }
+
+#[no_mangle]
+pub extern "C" fn test_goldilocks_many_add(a: u64, b: u64) -> u64 {
+    let mut a = F::from_canonical_u64(a);
+    let b = F::from_canonical_u64(b);
+    const N: usize = 0x8000000;
+    for _ in 0..N {
+        a = a + b;
+    }
+    a.0
+}

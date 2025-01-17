@@ -176,3 +176,279 @@ Without the `branch_hint`:
    - After a `cmp a, b`, Move if above or equal (a >= b)
 - `cmovbe dst, src`: Move `src` to `dst` if `CF=1 or ZF=1`
    - After a `cmp a, b`, Move if blelow or equal (a <= b) 
+
+## `GoldilocksField Mul`
+
+### Rust source
+
+```rust
+fn mul(self, rhs: Self) -> Self {
+    reduce128((self.0 as u128) * (rhs.0 as u128))
+}
+fn reduce128(x: u128) -> GoldilocksField {
+    let (x_lo, x_hi) = split(x); // This is a no-op
+    let x_hi_hi = x_hi >> 32;
+    let x_hi_lo = x_hi & EPSILON;
+
+    let (mut t0, borrow) = x_lo.overflowing_sub(x_hi_hi);
+    if borrow {
+        branch_hint(); // A borrow is exceedingly rare. It is faster to branch.
+        t0 -= EPSILON; // Cannot underflow.
+    }
+    let t1 = x_hi_lo * EPSILON;
+    let t2 = unsafe { add_no_canonicalize_trashing_input(t0, t1) };
+    GoldilocksField(t2)
+}
+const unsafe fn add_no_canonicalize_trashing_input(x: u64, y: u64) -> u64 {
+    let (res_wrapped, carry) = x.overflowing_add(y);
+    // Below cannot overflow unless the assumption if x + y < 2**64 + ORDER is incorrect.
+    res_wrapped + EPSILON * (carry as u64)
+}
+```
+
+### WASM
+```wat
+  (func $test_goldilocks_mul (type 15)
+    (local i32 i64 i64 i64 i64)
+    global.get $__stack_pointer
+    i32.const 16
+    i32.sub
+    local.tee 0
+    global.set $__stack_pointer
+    call $get_input
+    local.set 1
+    local.get 0
+    call $get_input
+    i64.const 0
+    local.get 1
+    i64.const 0
+    call $__multi3
+    i64.const 4294967295
+    i64.const 0
+    local.get 0
+    i64.load
+    local.tee 1
+    local.get 0
+    i32.const 8
+    i32.add
+    i64.load
+    local.tee 2
+    i64.const 32
+    i64.shr_u
+    local.tee 3
+    i64.sub
+    local.tee 4
+    i64.const -4294967295
+    i64.add
+    local.get 4
+    local.get 1
+    local.get 3
+    i64.lt_u
+    select
+    local.tee 1
+    local.get 2
+    i64.const 4294967295
+    i64.and
+    i64.const 4294967295
+    i64.mul
+    i64.add
+    local.tee 2
+    local.get 1
+    i64.lt_u
+    select
+    local.get 2
+    i64.add
+    call $set_output
+    local.get 0
+    i32.const 16
+    i32.add
+    global.set $__stack_pointer)
+  (func $__multi3 (type 18) (param i32 i64 i64 i64 i64)
+    (local i64 i64 i64 i64 i64 i64)
+    local.get 0
+    local.get 3
+    i64.const 4294967295
+    i64.and
+    local.tee 5
+    local.get 1
+    i64.const 4294967295
+    i64.and
+    local.tee 6
+    i64.mul
+    local.tee 7
+    local.get 3
+    i64.const 32
+    i64.shr_u
+    local.tee 8
+    local.get 6
+    i64.mul
+    local.tee 6
+    local.get 5
+    local.get 1
+    i64.const 32
+    i64.shr_u
+    local.tee 9
+    i64.mul
+    i64.add
+    local.tee 5
+    i64.const 32
+    i64.shl
+    i64.add
+    local.tee 10
+    i64.store
+    local.get 0
+    local.get 8
+    local.get 9
+    i64.mul
+    local.get 5
+    local.get 6
+    i64.lt_u
+    i64.extend_i32_u
+    i64.const 32
+    i64.shl
+    local.get 5
+    i64.const 32
+    i64.shr_u
+    i64.or
+    i64.add
+    local.get 10
+    local.get 7
+    i64.lt_u
+    i64.extend_i32_u
+    i64.add
+    local.get 4
+    local.get 1
+    i64.mul
+    local.get 3
+    local.get 2
+    i64.mul
+    i64.add
+    i64.add
+    i64.store offset=8)
+```
+
+### Spidermonkey generated code (x86_64):
+
+```
+0x00000050   1                       55  push rbp
+0x00000051   3                   4889e5  mov rbp, rsp
+0x00000054   4                 4883ec20  sub rsp, 0x20
+0x00000058   4                 49396638  cmp qword [r14 + 0x38], rsp
+0x0000005c   6             0f8202000000  jb 0x64
+0x00000062   2                     0f0b  ud2
+0x00000064   3                   4889fb  mov rbx, rdi
+0x00000067   7           418b8658020000  mov eax, dword [r14 + 0x258]
+0x0000006e   2                     8bf8  mov edi, eax
+0x00000070   3                   8945fc  mov dword [rbp - 4], eax
+0x00000073   3                   83ef10  sub edi, 0x10
+0x00000076   3                   897df8  mov dword [rbp - 8], edi
+0x00000079   7           4189be58020000  mov dword [r14 + 0x258], edi
+0x00000080   2                     33d2  xor edx, edx
+0x00000082   3                   4533c0  xor r8d, r8d
+0x00000085   3                   4889d9  mov rcx, rbx
+0x00000088   5               e873000000  call 0x100
+0x0000008d   4                 488d65e0  lea rsp, [rbp - 0x20]
+0x00000091   3                   8b45fc  mov eax, dword [rbp - 4]
+0x00000094   3                   83c0f8  add eax, 0xfffffff8
+0x00000097   4                 498b1c07  mov rbx, qword [r15 + rax]
+0x0000009b   3                   8b45f8  mov eax, dword [rbp - 8]
+0x0000009e   4                 498b1407  mov rdx, qword [r15 + rax]
+0x000000a2   3                   83c010  add eax, 0x10
+0x000000a5   7           41898658020000  mov dword [r14 + 0x258], eax
+0x000000ac   3                   4889d8  mov rax, rbx
+0x000000af   4                 48c1e820  shr rax, 0x20
+0x000000b3   3                   4889d1  mov rcx, rdx
+0x000000b6   3                   482bc8  sub rcx, rax
+0x000000b9   3                   4889ce  mov rsi, rcx
+0x000000bc  10     49bb01000000ffffffff  movabs r11, 0xffffffff00000001
+0x000000c6   3                   4903cb  add rcx, r11
+0x000000c9   3                   483bd0  cmp rdx, rax
+0x000000cc   4                 480f43ce  cmovae rcx, rsi
+0x000000d0   6             41bbffffffff  mov r11d, 0xffffffff
+0x000000d6   3                   4923db  and rbx, r11
+0x000000d9   6             41bbffffffff  mov r11d, 0xffffffff
+0x000000df   4                 490fafdb  imul rbx, r11
+0x000000e3   3                   4803d9  add rbx, rcx
+0x000000e6   5               b8ffffffff  mov eax, 0xffffffff
+0x000000eb   2                     33d2  xor edx, edx
+0x000000ed   3                   483bd9  cmp rbx, rcx
+0x000000f0   4                 480f43c2  cmovae rax, rdx
+0x000000f4   3                   4803c3  add rax, rbx
+0x000000f7   4                 4883c420  add rsp, 0x20
+0x000000fb   1                       5d  pop rbp
+0x000000fc   1                       c3  ret
+
+;; a:64b x b:64b -> c:128b := a*b
+0x00000100   1                       55  push rbp
+0x00000101   3                   4889e5  mov rbp, rsp
+0x00000104   3                   4989c9  mov r9, rcx
+0x00000107   6             41bbffffffff  mov r11d, 0xffffffff
+0x0000010d   3                   4d23cb  and r9, r11
+0x00000110   3                   4889f3  mov rbx, rsi
+0x00000113   6             41bbffffffff  mov r11d, 0xffffffff
+0x00000119   3                   4923db  and rbx, r11
+0x0000011c   3                   4d89ca  mov r10, r9
+0x0000011f   4                 4c0fafd3  imul r10, rbx
+0x00000123   3                   4889c8  mov rax, rcx
+0x00000126   4                 48c1e920  shr rcx, 0x20
+0x0000012a   3                   4989cd  mov r13, rcx
+0x0000012d   4                 4c0fafeb  imul r13, rbx
+0x00000131   3                   4889f3  mov rbx, rsi
+0x00000134   4                 48c1ee20  shr rsi, 0x20
+0x00000138   4                 4c0fafce  imul r9, rsi
+0x0000013c   3                   4d03cd  add r9, r13
+0x0000013f   3                   4d89cc  mov r12, r9
+0x00000142   4                 49c1e420  shl r12, 0x20
+0x00000146   3                   4d03e2  add r12, r10
+0x00000149   4                 4d89243f  mov qword [r15 + rdi], r12
+0x0000014d   4                 480fafce  imul rcx, rsi
+0x00000151   2                     33f6  xor esi, esi
+0x00000153   3                   4d3bcd  cmp r9, r13
+0x00000156   4                 400f92c6  setb sil
+0x0000015a   2                     8bf6  mov esi, esi
+0x0000015c   4                 48c1e620  shl rsi, 0x20
+0x00000160   4                 49c1e920  shr r9, 0x20
+0x00000164   3                   490bf1  or rsi, r9
+0x00000167   3                   4803ce  add rcx, rsi
+0x0000016a   2                     33f6  xor esi, esi
+0x0000016c   3                   4d3be2  cmp r12, r10
+0x0000016f   4                 400f92c6  setb sil
+0x00000173   2                     8bf6  mov esi, esi
+0x00000175   3                   4803ce  add rcx, rsi
+0x00000178   4                 4c0fafc3  imul r8, rbx
+0x0000017c   4                 480fafd0  imul rdx, rax
+0x00000180   3                   4c03c2  add r8, rdx
+0x00000183   3                   4903c8  add rcx, r8
+0x00000186   5               49894c3f08  mov qword [r15 + rdi + 8], rcx
+0x0000018b   1                       5d  pop rbp
+0x0000018c   1                       c3  ret
+```
+
+90 instructions
+
+### Native x86_64 generated code
+
+```
+;; rdi is a
+;; rsi is b
+```
+```
+   12f00:	48 89 f0             	mov    rax,rsi
+   12f03:	48 f7 e7             	mul    rdi ;; rdx:rax = rax * rdi ;; 64b x 64b -> 128b
+   12f06:	48 89 d1             	mov    rcx,rdx
+   12f09:	48 c1 e9 20          	shr    rcx,0x20
+   12f0d:	48 29 c8             	sub    rax,rcx
+   12f10:	73 0d                	jae    12f1f <test_goldilocks_mul+0x1f>
+   12f12:	48 b9 01 00 00 00 ff 	movabs rcx,0xffffffff00000001
+   12f19:	ff ff ff 
+   12f1c:	48 01 c8             	add    rax,rcx
+   12f1f:	89 d1                	mov    ecx,edx
+   12f21:	48 c1 e2 20          	shl    rdx,0x20
+   12f25:	48 29 ca             	sub    rdx,rcx
+   12f28:	48 01 d0             	add    rax,rdx
+   12f2b:	19 d2                	sbb    edx,edx
+   12f2d:	48 01 d0             	add    rax,rdx
+   12f30:	c3                   	ret
+```
+
+16 instructions
