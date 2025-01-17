@@ -313,13 +313,13 @@ impl SubAssign for GoldilocksField {
 impl Mul for GoldilocksField {
     type Output = Self;
 
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(feature = "wasm_opt"))]
     #[inline]
     fn mul(self, rhs: Self) -> Self {
         reduce128((self.0 as u128) * (rhs.0 as u128))
     }
 
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(feature = "wasm_opt")]
     #[inline]
     fn mul(self, rhs: Self) -> Self {
         // mul_wasm32 is implemented in a separated function so that we can test it easier
@@ -368,13 +368,18 @@ pub fn mul_wasm32(a: GoldilocksField, b: GoldilocksField) -> GoldilocksField {
 
     let c1 = m0 + m1;
 
-    // let c: u64 = (c1 << 32) | c0;
-    let (c, over) = c1.overflowing_shl(32);
+    // let c: u64 = (c1 << 32) + c0;
+    let c = c1 << 32;
+    let over = c1 > EPSILON;
     let (mut c, over) = c.overflowing_add((over as u64) * EPSILON);
     if over {
         c += EPSILON;
     }
-    let c = c | c0;
+    let (c, over) = c.overflowing_add(c0);
+    let (mut c, over) = c.overflowing_add((over as u64) * EPSILON);
+    if over {
+        c += EPSILON;
+    }
     GoldilocksField(c)
 }
 
