@@ -452,3 +452,147 @@ const unsafe fn add_no_canonicalize_trashing_input(x: u64, y: u64) -> u64 {
 ```
 
 16 instructions
+
+### WASM (with 32bit operations, "wasm_opt" feature)
+
+```
+  (func $_ZN13plonky2_field16goldilocks_field10mul_wasm3217h128e6d8d11bb7088E (type 16) (param i64 i64) (result i64)
+    (local i64 i64 i64 i64 i64)
+    i64.const 4294967295
+    i64.const 0
+    local.get 1
+    i64.const 32
+    i64.shr_u
+    local.tee 2
+    local.get 0
+    i64.const 4294967295
+    i64.and
+    local.tee 3
+    i64.mul
+    local.tee 4
+    local.get 1
+    i64.const 4294967295
+    i64.and
+    local.tee 5
+    local.get 0
+    i64.const 32
+    i64.shr_u
+    local.tee 6
+    i64.mul
+    i64.add
+    local.tee 0
+    i64.const 4294967295
+    i64.const 0
+    local.get 0
+    local.get 4
+    i64.lt_u
+    select
+    i64.add
+    local.tee 1
+    i64.const 4294967295
+    i64.add
+    local.get 1
+    local.get 1
+    local.get 0
+    i64.lt_u
+    select
+    local.tee 4
+    local.get 2
+    local.get 6
+    i64.mul
+    local.tee 0
+    i64.add
+    local.tee 1
+    i64.const 4294967295
+    i64.const 0
+    local.get 1
+    local.get 4
+    i64.lt_u
+    select
+    i64.add
+    local.tee 2
+    i64.const 4294967295
+    i64.add
+    local.get 2
+    local.get 2
+    local.get 1
+    i64.lt_u
+    select
+    local.tee 1
+    i64.const 4294967295
+    i64.and
+    local.get 1
+    i64.const 32
+    i64.shr_u
+    local.tee 1
+    i64.add
+    local.tee 2
+    i64.const 4294967295
+    i64.gt_u
+    select
+    local.get 2
+    i64.const 32
+    i64.shl
+    i64.or
+    local.tee 2
+    local.get 5
+    local.get 3
+    i64.mul
+    local.tee 3
+    local.get 0
+    i64.sub
+    local.tee 4
+    i64.const 4294967295
+    i64.const 0
+    local.get 3
+    local.get 0
+    i64.lt_u
+    select
+    local.tee 0
+    i64.sub
+    local.tee 3
+    i64.const -4294967295
+    i64.add
+    local.get 3
+    local.get 4
+    local.get 0
+    i64.lt_u
+    select
+    local.tee 0
+    local.get 1
+    i64.sub
+    local.tee 3
+    i64.const 4294967295
+    i64.const 0
+    local.get 0
+    local.get 1
+    i64.lt_u
+    select
+    local.tee 0
+    i64.sub
+    local.tee 1
+    i64.const -4294967295
+    i64.add
+    local.get 1
+    local.get 3
+    local.get 0
+    i64.lt_u
+    select
+    i64.add
+    local.tee 0
+    i64.const 4294967295
+    i64.const 0
+    local.get 0
+    local.get 2
+    i64.lt_u
+    select
+    i64.add
+    local.tee 1
+    i64.const 4294967295
+    i64.add
+    local.get 1
+    local.get 1
+    local.get 0
+    i64.lt_u
+    select)
+```
