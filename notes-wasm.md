@@ -453,7 +453,7 @@ const unsafe fn add_no_canonicalize_trashing_input(x: u64, y: u64) -> u64 {
 
 16 instructions
 
-### WASM (with 32bit operations, "wasm_opt" feature)
+### WASM ("wasm_opt" feature)
 
 ```
   (func $_ZN13plonky2_field16goldilocks_field10mul_wasm3217h128e6d8d11bb7088E (type 16) (param i64 i64) (result i64)
@@ -596,3 +596,100 @@ const unsafe fn add_no_canonicalize_trashing_input(x: u64, y: u64) -> u64 {
     i64.lt_u
     select)
 ```
+
+### Spidermonkey generated code (x86_64, "wasm_opt" feature):
+
+```
+0x00000050   1                       55  push rbp
+0x00000051   3                   4889e5  mov rbp, rsp
+0x00000054   3                   4889f0  mov rax, rsi
+0x00000057   4                 48c1e820  shr rax, 0x20
+0x0000005b   3                   4889f9  mov rcx, rdi
+0x0000005e   6             41bbffffffff  mov r11d, 0xffffffff
+0x00000064   3                   4923cb  and rcx, r11
+0x00000067   3                   4889c2  mov rdx, rax
+0x0000006a   4                 480fafd1  imul rdx, rcx
+0x0000006e   6             41bbffffffff  mov r11d, 0xffffffff
+0x00000074   3                   4923f3  and rsi, r11
+0x00000077   4                 48c1ef20  shr rdi, 0x20
+0x0000007b   3                   4889f3  mov rbx, rsi
+0x0000007e   4                 480fafdf  imul rbx, rdi
+0x00000082   3                   4803da  add rbx, rdx
+0x00000085   6             41b8ffffffff  mov r8d, 0xffffffff
+0x0000008b   3                   4533c9  xor r9d, r9d
+0x0000008e   3                   483bda  cmp rbx, rdx
+0x00000091   4                 4d0f43c1  cmovae r8, r9
+0x00000095   3                   4c03c3  add r8, rbx
+0x00000098   3                   4c89c2  mov rdx, r8
+0x0000009b   6             41bbffffffff  mov r11d, 0xffffffff
+0x000000a1   3                   4903d3  add rdx, r11
+0x000000a4   3                   4c3bc3  cmp r8, rbx
+0x000000a7   4                 490f43d0  cmovae rdx, r8
+0x000000ab   4                 480fafc7  imul rax, rdi
+0x000000af   3                   4889d3  mov rbx, rdx
+0x000000b2   3                   4803d0  add rdx, rax
+0x000000b5   5               bfffffffff  mov edi, 0xffffffff
+0x000000ba   3                   4533c0  xor r8d, r8d
+0x000000bd   3                   483bd3  cmp rdx, rbx
+0x000000c0   4                 490f43f8  cmovae rdi, r8
+0x000000c4   3                   4803fa  add rdi, rdx
+0x000000c7   3                   4889fb  mov rbx, rdi
+0x000000ca   6             41bbffffffff  mov r11d, 0xffffffff
+0x000000d0   3                   4903db  add rbx, r11
+0x000000d3   3                   483bfa  cmp rdi, rdx
+0x000000d6   4                 480f43df  cmovae rbx, rdi
+0x000000da   3                   4889df  mov rdi, rbx
+0x000000dd   6             41bbffffffff  mov r11d, 0xffffffff
+0x000000e3   3                   4923fb  and rdi, r11
+0x000000e6   4                 48c1eb20  shr rbx, 0x20
+0x000000ea   3                   4803fb  add rdi, rbx
+0x000000ed   6             41b8ffffffff  mov r8d, 0xffffffff
+0x000000f3   5               baffffffff  mov edx, 0xffffffff
+0x000000f8   3                   4533c9  xor r9d, r9d
+0x000000fb   3                   493bf8  cmp rdi, r8
+0x000000fe   4                 490f46d1  cmovbe rdx, r9
+0x00000102   4                 48c1e720  shl rdi, 0x20
+0x00000106   3                   480bd7  or rdx, rdi
+0x00000109   4                 480faff1  imul rsi, rcx
+0x0000010d   3                   4889f1  mov rcx, rsi
+0x00000110   3                   482bc8  sub rcx, rax
+0x00000113   5               bfffffffff  mov edi, 0xffffffff
+0x00000118   3                   4533c0  xor r8d, r8d
+0x0000011b   3                   483bf0  cmp rsi, rax
+0x0000011e   4                 490f43f8  cmovae rdi, r8
+0x00000122   3                   4889c8  mov rax, rcx
+0x00000125   3                   482bc7  sub rax, rdi
+0x00000128   3                   4889c6  mov rsi, rax
+0x0000012b  10     49bb01000000ffffffff  movabs r11, 0xffffffff00000001
+0x00000135   3                   4903c3  add rax, r11
+0x00000138   3                   483bcf  cmp rcx, rdi
+0x0000013b   4                 480f43c6  cmovae rax, rsi
+0x0000013f   3                   4889c1  mov rcx, rax
+0x00000142   3                   482bcb  sub rcx, rbx
+0x00000145   5               beffffffff  mov esi, 0xffffffff
+0x0000014a   2                     33ff  xor edi, edi
+0x0000014c   3                   483bc3  cmp rax, rbx
+0x0000014f   4                 480f43f7  cmovae rsi, rdi
+0x00000153   3                   4889cb  mov rbx, rcx
+0x00000156   3                   482bde  sub rbx, rsi
+0x00000159   3                   4889d8  mov rax, rbx
+0x0000015c  10     49bb01000000ffffffff  movabs r11, 0xffffffff00000001
+0x00000166   3                   4903db  add rbx, r11
+0x00000169   3                   483bce  cmp rcx, rsi
+0x0000016c   4                 480f43d8  cmovae rbx, rax
+0x00000170   3                   4803da  add rbx, rdx
+0x00000173   5               b9ffffffff  mov ecx, 0xffffffff
+0x00000178   2                     33c0  xor eax, eax
+0x0000017a   3                   483bda  cmp rbx, rdx
+0x0000017d   4                 480f43c8  cmovae rcx, rax
+0x00000181   3                   4803cb  add rcx, rbx
+0x00000184   3                   4889c8  mov rax, rcx
+0x00000187   6             41bbffffffff  mov r11d, 0xffffffff
+0x0000018d   3                   4903c3  add rax, r11
+0x00000190   3                   483bcb  cmp rcx, rbx
+0x00000193   4                 480f43c1  cmovae rax, rcx
+0x00000197   1                       5d  pop rbp
+0x00000198   1                       c3  ret
+```
+
+90 instructions

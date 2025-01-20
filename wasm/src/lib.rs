@@ -92,6 +92,17 @@ pub extern "C" fn test_goldilocks_many_add(a: u64, b: u64) -> u64 {
     a.0
 }
 
+#[no_mangle]
+pub extern "C" fn test_goldilocks_many_mul(a: u64, b: u64) -> u64 {
+    let mut a = F::from_canonical_u64(a);
+    let b = F::from_canonical_u64(b);
+    const N: usize = 0x8000000;
+    for _ in 0..N {
+        a = a * b;
+    }
+    a.0
+}
+
 const EPSILON: u64 = (1 << 32) - 1;
 
 /// mul_wasm32 implements the trick explained by Jordi Baylina
@@ -179,23 +190,23 @@ mod tests {
 
     #[test]
     fn test_mul_wasm32_0() {
-        // let a: u64 = 9223372034707292160;
-        // let b: u64 = 42;
-        // let a = F::from_canonical_u64(a);
-        // let b = F::from_canonical_u64(b);
-        // let c = mul_wasm32(a, b);
-        // assert_eq!(c.to_canonical_u64(), (a * b).to_canonical_u64()); // compare to the non-wasm32 mult
-        // assert_eq!(c.to_canonical_u64(), 18446744069414584300 as u64);
+        let a: u64 = 9223372034707292160;
+        let b: u64 = 42;
+        let a = F::from_canonical_u64(a);
+        let b = F::from_canonical_u64(b);
+        let c = mul_wasm32(a, b);
+        assert_eq!(c.to_canonical_u64(), (a * b).to_canonical_u64()); // compare to the non-wasm32 mult
+        assert_eq!(c.to_canonical_u64(), 18446744069414584300 as u64);
 
-        // println!("");
+        println!("");
 
-        // let a: u64 = 9223372034707292160;
-        // let b: u64 = 9223372034707292161;
-        // let a = F::from_canonical_u64(a);
-        // let b = F::from_canonical_u64(b);
-        // let c = mul_wasm32(a, b);
-        // assert_eq!(c.to_canonical_u64(), (a * b).to_canonical_u64()); // compare to the non-wasm32 mult
-        // assert_eq!(c.to_canonical_u64(), 4611686017353646080 as u64);
+        let a: u64 = 9223372034707292160;
+        let b: u64 = 9223372034707292161;
+        let a = F::from_canonical_u64(a);
+        let b = F::from_canonical_u64(b);
+        let c = mul_wasm32(a, b);
+        assert_eq!(c.to_canonical_u64(), (a * b).to_canonical_u64()); // compare to the non-wasm32 mult
+        assert_eq!(c.to_canonical_u64(), 4611686017353646080 as u64);
 
         let a: u64 = 10455546295413958833;
         let b: u64 = 4511168707820812235;
@@ -211,14 +222,17 @@ mod tests {
     // uncomment once the previous test passes:
     #[test]
     fn test_mul_wasm32_loop() {
-        for _ in 0..10000 {
+        for _ in 0..10_000 {
             let a = F::rand();
             let b = F::rand();
-            dbg!(a);
-            dbg!(b);
             let c = mul_wasm32(a, b);
-            // note that the result is already 'canonicalized'
-            assert_eq!(c.to_canonical_u64(), (a * b).to_canonical_u64()); // compare to the non-wasm32 mult
+            assert_eq!(
+                c.to_canonical_u64(),
+                (a * b).to_canonical_u64(),
+                "a={}, b={}",
+                a,
+                b
+            ); // compare to the non-wasm32 mult
         }
     }
 }
