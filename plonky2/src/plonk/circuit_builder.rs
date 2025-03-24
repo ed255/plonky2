@@ -8,6 +8,7 @@ use std::{collections::BTreeMap, sync::Arc};
 
 use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
+use lazy_static::lazy_static;
 use log::{debug, info, warn, Level};
 #[cfg(feature = "timing")]
 use web_time::Instant;
@@ -53,6 +54,16 @@ use crate::util::context_tree::ContextTree;
 use crate::util::partial_products::num_partial_products;
 use crate::util::timing::TimingTree;
 use crate::util::{log2_ceil, log2_strict, transpose, transpose_poly_values};
+
+#[cfg(feature = "std")]
+lazy_static! {
+    static ref FIND_VT: Option<usize> = {
+        match std::env::var(&"FIND_VT") {
+            Ok(v) => Some(usize::from_str_radix(&v, 10).unwrap()),
+            Err(_) => None,
+        }
+    };
+}
 
 /// Number of random coins needed for lookups (for each challenge).
 /// A coin is a randomly sampled extension field element from the verifier,
@@ -326,6 +337,9 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilder<F, D> {
     /// generate the final witness (a grid of wire values), these virtual targets will go away.
     pub fn add_virtual_target(&mut self) -> Target {
         let index = self.virtual_target_index;
+        if Some(index) == *FIND_VT {
+            panic!("found VT {}", index);
+        }
         self.virtual_target_index += 1;
         Target::VirtualTarget { index }
     }
