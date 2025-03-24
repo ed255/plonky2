@@ -57,8 +57,14 @@ use crate::util::{log2_ceil, log2_strict, transpose, transpose_poly_values};
 
 #[cfg(feature = "std")]
 lazy_static! {
-    static ref FIND_VT: Option<usize> = {
-        match std::env::var(&"FIND_VT") {
+    static ref FIND_ADD_VT: Option<usize> = {
+        match std::env::var(&"FIND_ADD_VT") {
+            Ok(v) => Some(usize::from_str_radix(&v, 10).unwrap()),
+            Err(_) => None,
+        }
+    };
+    static ref FIND_CONNECT_VT: Option<usize> = {
+        match std::env::var(&"FIND_CONNECT_VT") {
             Ok(v) => Some(usize::from_str_radix(&v, 10).unwrap()),
             Err(_) => None,
         }
@@ -337,8 +343,10 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilder<F, D> {
     /// generate the final witness (a grid of wire values), these virtual targets will go away.
     pub fn add_virtual_target(&mut self) -> Target {
         let index = self.virtual_target_index;
-        if Some(index) == *FIND_VT {
-            panic!("found VT {}", index);
+        if Some(index) == *FIND_ADD_VT {
+            println!(">>> found VT {}", index);
+            println!("stack backtrace:");
+            println!("{}\n", std::backtrace::Backtrace::force_capture());
         }
         self.virtual_target_index += 1;
         Target::VirtualTarget { index }
@@ -536,6 +544,16 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilder<F, D> {
             y.is_routable(&self.config),
             "Tried to route a wire that isn't routable"
         );
+        match (x, y) {
+            (Target::VirtualTarget { index: x }, Target::VirtualTarget { index: y }) => {
+                if Some(x) == *FIND_CONNECT_VT || Some(y) == *FIND_CONNECT_VT {
+                    println!(">>> found connect VT {}-{}", x, y);
+                    println!("stack backtrace:");
+                    println!("{}\n", std::backtrace::Backtrace::force_capture());
+                }
+            }
+            _ => (),
+        }
         self.copy_constraints
             .push(CopyConstraint::new((x, y), self.context_log.open_stack()));
     }
