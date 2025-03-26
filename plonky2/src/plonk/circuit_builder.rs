@@ -63,9 +63,25 @@ lazy_static! {
             Err(_) => None,
         }
     };
-    static ref FIND_CONNECT_VT: Option<usize> = {
+    static ref FIND_CONNECT_VT: Option<Target> = {
         match std::env::var(&"FIND_CONNECT_VT") {
-            Ok(v) => Some(usize::from_str_radix(&v, 10).unwrap()),
+            Ok(v) => Some(Target::VirtualTarget {
+                index: usize::from_str_radix(&v, 10).unwrap(),
+            }),
+            Err(_) => None,
+        }
+    };
+    static ref FIND_CONNECT_W: Option<Target> = {
+        match std::env::var(&"FIND_CONNECT_W") {
+            Ok(v) => {
+                let [row, column]: [usize; 2] = v
+                    .split(",")
+                    .map(|s| usize::from_str_radix(s, 10).unwrap())
+                    .collect_vec()
+                    .try_into()
+                    .unwrap();
+                Some(Target::Wire(Wire { row, column }))
+            }
             Err(_) => None,
         }
     };
@@ -544,15 +560,15 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilder<F, D> {
             y.is_routable(&self.config),
             "Tried to route a wire that isn't routable"
         );
-        match (x, y) {
-            (Target::VirtualTarget { index: x }, Target::VirtualTarget { index: y }) => {
-                if Some(x) == *FIND_CONNECT_VT || Some(y) == *FIND_CONNECT_VT {
-                    println!(">>> found connect VT {}-{}", x, y);
-                    println!("stack backtrace:");
-                    println!("{}\n", std::backtrace::Backtrace::force_capture());
-                }
-            }
-            _ => (),
+        if Some(x) == *FIND_CONNECT_VT || Some(y) == *FIND_CONNECT_VT {
+            println!(">>> found connect VT {:?}-{:?}", x, y);
+            println!("stack backtrace:");
+            println!("{}\n", std::backtrace::Backtrace::force_capture());
+        }
+        if Some(x) == *FIND_CONNECT_W || Some(y) == *FIND_CONNECT_W {
+            println!(">>> found connect W {:?}-{:?}", x, y);
+            println!("stack backtrace:");
+            println!("{}\n", std::backtrace::Backtrace::force_capture());
         }
         self.copy_constraints
             .push(CopyConstraint::new((x, y), self.context_log.open_stack()));
