@@ -97,6 +97,17 @@ pub fn generate_partial_witness<
     }
 
     if remaining_generators != 0 {
+        for (generator_idx, expired) in generator_is_expired.iter().enumerate() {
+            if !expired {
+                let generator = &generators[generator_idx].0;
+                println!(
+                    "ERR: not expired generator {} {}.  Depends on:",
+                    generator_idx,
+                    generator.id()
+                );
+                println!("\t{:?}", generator.watch_list());
+            }
+        }
         return Err(anyhow!("{} generators weren't run", remaining_generators));
     }
 
