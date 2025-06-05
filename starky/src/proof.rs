@@ -83,6 +83,7 @@ impl<const D: usize> StarkProofTarget<D> {
         if let Some(poly) = &self.quotient_polys_cap {
             buffer.write_target_merkle_cap(poly)?;
         }
+
         buffer.write_target_fri_proof(&self.opening_proof)?;
         self.openings.to_buffer(buffer)?;
         Ok(())
@@ -189,8 +190,8 @@ pub struct StarkProofChallengesTarget<const D: usize> {
     /// `Target`s for the randomness used in FRI.
     pub fri_challenges: FriChallengesTarget<D>,
 }
-
-/// Randomness for all STARK proofs contained in a [`MultiProof`]`.
+/// Randomness for all STARK proofs contained in a MultiProof.
+// TODO: remove?
 #[derive(Debug)]
 pub struct MultiProofChallenges<F: RichField + Extendable<D>, const D: usize, const N: usize> {
     /// Randomness used in each STARK proof.
